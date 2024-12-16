@@ -21,6 +21,8 @@ contract EscrowTest is Test {
     event Withdraw(address indexed to, uint256 amount);
     event Pause();
     event Unpause();
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     function setUp() public {
         moxie = new Moxie();
@@ -123,5 +125,23 @@ contract EscrowTest is Test {
         moxie.approve(address(escrow), 10_000 * 10**18);
         escrow.deposit(111, 10_000 * 10**18);
         vm.stopPrank();
+    }
+
+    function test_transferOwnership() public {
+        vm.startPrank(owner);
+        vm.expectEmit(true, true, true, true);
+
+        emit OwnershipTransferStarted(owner, bob);
+        escrow.transferOwnership(bob);
+
+        vm.stopPrank();
+
+        assertEq(escrow.owner(), owner);
+
+        vm.startPrank(bob);
+        escrow.acceptOwnership();
+        vm.stopPrank();
+
+        assertEq(escrow.owner(), bob);
     }
 }
